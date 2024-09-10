@@ -5,10 +5,20 @@ from tkinter import ttk, messagebox
 
 class City:
     def __init__(self, num_houses, num_hospitals):
-        self.width = 500
-        self.height = 500
-        self.houses = [(random.randint(0, self.width), random.randint(0, self.height)) for _ in range(num_houses)]
-        self.hospitals = [(random.randint(0, self.width), random.randint(0, self.height)) for _ in range(num_hospitals)]
+        self.grid_size = 10
+        self.cell_size = 50
+        self.width = self.grid_size * self.cell_size
+        self.height = self.grid_size * self.cell_size
+        self.houses = self.generate_random_positions(num_houses)
+        self.hospitals = self.generate_random_positions(num_hospitals)
+
+    def generate_random_positions(self, count):
+        positions = set()
+        while len(positions) < count:
+            x = random.randint(0, self.grid_size - 1) * self.cell_size + self.cell_size // 2
+            y = random.randint(0, self.grid_size - 1) * self.cell_size + self.cell_size // 2
+            positions.add((x, y))
+        return list(positions)
 
     def total_distance(self):
         return sum(min(math.dist(house, hospital) for hospital in self.hospitals) for house in self.houses)
@@ -17,13 +27,21 @@ class City:
         for _ in range(max_iterations):
             old_distance = self.total_distance()
             hospital_index = random.randint(0, len(self.hospitals) - 1)
-            old_x, old_y = self.hospitals[hospital_index]
-            new_x = max(0, min(self.width, old_x + random.randint(-5, 5)))
-            new_y = max(0, min(self.height, old_y + random.randint(-5, 5)))
-            self.hospitals[hospital_index] = (new_x, new_y)
-            new_distance = self.total_distance()
-            if new_distance >= old_distance:
-                self.hospitals[hospital_index] = (old_x, old_y)
+            old_pos = self.hospitals[hospital_index]
+            new_pos = self.get_new_position(old_pos)
+            if new_pos not in self.hospitals and new_pos not in self.houses:
+                self.hospitals[hospital_index] = new_pos
+                new_distance = self.total_distance()
+                if new_distance >= old_distance:
+                    self.hospitals[hospital_index] = old_pos
+
+    def get_new_position(self, old_pos):
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        dx, dy = random.choice(directions)
+        new_x = (old_pos[0] // self.cell_size + dx) % self.grid_size
+        new_y = (old_pos[1] // self.cell_size + dy) % self.grid_size
+        return (new_x * self.cell_size + self.cell_size // 2, 
+                new_y * self.cell_size + self.cell_size // 2)
 
 class Application(tk.Tk):
     def __init__(self):
@@ -41,7 +59,7 @@ class Application(tk.Tk):
         ttk.Label(input_frame, text="Number of Houses:").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.houses_entry = ttk.Entry(input_frame)
         self.houses_entry.grid(row=0, column=1, sticky=tk.W, pady=5)
-        self.houses_entry.insert(0, "50")
+        self.houses_entry.insert(0, "20")
 
         ttk.Label(input_frame, text="Number of Hospitals:").grid(row=1, column=0, sticky=tk.W, pady=5)
         self.hospitals_entry = ttk.Entry(input_frame)
@@ -71,8 +89,10 @@ class Application(tk.Tk):
         try:
             num_houses = int(self.houses_entry.get())
             num_hospitals = int(self.hospitals_entry.get())
-        except ValueError:
-            messagebox.showerror("Input Error", "Please enter valid numbers for houses and hospitals.")
+            if num_houses + num_hospitals > 100:
+                raise ValueError("Total number of houses and hospitals cannot exceed 100")
+        except ValueError as e:
+            messagebox.showerror("Input Error", str(e))
             return
 
         city = City(num_houses, num_hospitals)
@@ -89,17 +109,17 @@ class Application(tk.Tk):
         self.canvas.delete("all")
         
         # Draw grid lines
-        for i in range(0, 501, 50):  # Draw lines every 50 pixels
-            self.canvas.create_line(i, 0, i, 500, fill="lightgray")
-            self.canvas.create_line(0, i, 500, i, fill="lightgray")
+        for i in range(0, city.width + 1, city.cell_size):
+            self.canvas.create_line(i, 0, i, city.height, fill="lightgray")
+            self.canvas.create_line(0, i, city.width, i, fill="lightgray")
         
         # Draw houses
         for x, y in city.houses:
-            self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="blue")
+            self.canvas.create_oval(x-10, y-10, x+10, y+10, fill="blue")
         
         # Draw hospitals
         for x, y in city.hospitals:
-            self.canvas.create_rectangle(x-5, y-5, x+5, y+5, fill="red")
+            self.canvas.create_rectangle(x-10, y-10, x+10, y+10, fill="red")
 
 def main():
     app = Application()
