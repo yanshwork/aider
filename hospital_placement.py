@@ -78,12 +78,16 @@ class Application(tk.Tk):
 
         self.initial_distance_var = tk.StringVar()
         self.final_distance_var = tk.StringVar()
+        self.improvement_var = tk.StringVar()
 
         ttk.Label(results_frame, text="Initial Total Distance:").grid(row=0, column=0, sticky=tk.W, pady=5)
         ttk.Label(results_frame, textvariable=self.initial_distance_var).grid(row=0, column=1, sticky=tk.W, pady=5)
 
         ttk.Label(results_frame, text="Final Total Distance:").grid(row=1, column=0, sticky=tk.W, pady=5)
         ttk.Label(results_frame, textvariable=self.final_distance_var).grid(row=1, column=1, sticky=tk.W, pady=5)
+
+        ttk.Label(results_frame, text="Improvement:").grid(row=2, column=0, sticky=tk.W, pady=5)
+        ttk.Label(results_frame, textvariable=self.improvement_var).grid(row=2, column=1, sticky=tk.W, pady=5)
 
     def optimize(self):
         try:
@@ -102,6 +106,10 @@ class Application(tk.Tk):
         city.hill_climbing()
         final_distance = city.total_distance()
         self.final_distance_var.set(f"{final_distance:.2f}")
+
+        # Calculate and display improvement percentage
+        improvement = (initial_distance - final_distance) / initial_distance * 100
+        self.improvement_var.set(f"{improvement:.2f}%")
 
         self.draw_city(city)
 
