@@ -87,8 +87,17 @@ class Application(tk.Tk):
 
     def draw_city(self, city):
         self.canvas.delete("all")
+        
+        # Draw grid lines
+        for i in range(0, 501, 50):  # Draw lines every 50 pixels
+            self.canvas.create_line(i, 0, i, 500, fill="lightgray")
+            self.canvas.create_line(0, i, 500, i, fill="lightgray")
+        
+        # Draw houses
         for x, y in city.houses:
             self.canvas.create_oval(x-2, y-2, x+2, y+2, fill="blue")
+        
+        # Draw hospitals
         for x, y in city.hospitals:
             self.canvas.create_rectangle(x-5, y-5, x+5, y+5, fill="red")
 
